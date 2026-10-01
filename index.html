@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#14171c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-title" content="Field Games">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Field Games</title>
+<style>
+:root{
+  --bg:#14171c;--card:#1f242c;--card2:#2a313b;--text:#eef1f5;--muted:#9aa4b2;
+  --accent:#f5a524;--good:#3ecf8e;--bad:#ef5d5d;
+  --p0:#f5a524;--p1:#4ea8ff;--p2:#3ecf8e;--p3:#e266ff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:17px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+.screen{display:none;max-width:520px;margin:0 auto;padding:16px;min-height:100%}
+.screen.on{display:flex;flex-direction:column;gap:14px}
+h1{font-size:30px;margin:8px 0 0}
+h2{font-size:24px;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}
+.top{display:flex;align-items:center;gap:10px}
+.top h2{flex:1}
+.back{background:var(--card2);border:0;color:var(--text);border-radius:12px;width:44px;height:44px;font-size:22px}
+.menu{display:grid;gap:12px}
+.tile{background:var(--card);border:0;color:var(--text);border-radius:18px;padding:18px;text-align:left;display:flex;gap:14px;align-items:center;font:inherit}
+.tile .ic{font-size:34px;width:48px;text-align:center}
+.tile b{display:block;font-size:19px}
+.tile span{color:var(--muted);font-size:15px}
+.btn{background:var(--accent);color:#1a1300;border:0;border-radius:14px;padding:16px;font:600 18px system-ui,sans-serif;width:100%}
+.btn.alt{background:var(--card2);color:var(--text)}
+.btn.good{background:var(--good);color:#002914}
+.btn.bad{background:var(--bad);color:#2b0000}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.card{background:var(--card);border-radius:18px;padding:16px}
+label{display:block;color:var(--muted);font-size:14px;margin-bottom:6px}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:48px;height:48px;border-radius:12px;border:0;background:var(--card2);color:var(--text);font-size:24px}
+.stepper output{flex:1;text-align:center;font-size:26px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:0;background:var(--card2);color:var(--text);padding:10px 14px;border-radius:999px;font:inherit;font-size:15px}
+.chip.on{background:var(--accent);color:#1a1300;font-weight:600}
+.big{font-size:40px;font-weight:800;text-align:center;line-height:1.15;word-break:break-word}
+.center{text-align:center}
+.reveal{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;text-align:center;min-height:55vh}
+.timer{font-size:64px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+.scores{display:flex;gap:8px;flex-wrap:wrap}
+.score{flex:1;min-width:70px;background:var(--card);border-radius:14px;padding:10px;text-align:center;border:3px solid transparent}
+.score.turn{border-color:currentColor}
+.score b{display:block;font-size:26px;color:var(--text)}
+.score small{font-size:13px}
+svg{touch-action:manipulation;display:block;width:100%;height:auto}
+.c4{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;background:#1d4fa3;padding:8px;border-radius:16px}
+.c4 div{aspect-ratio:1;border-radius:50%;background:var(--bg)}
+.die{font-size:96px;text-align:center;line-height:1}
+.banner{background:var(--card2);border-radius:14px;padding:12px;text-align:center;font-weight:600}
+input[type=text]{width:100%;padding:12px;border-radius:12px;border:0;background:var(--card2);color:var(--text);font:inherit}
+.names{display:grid;gap:8px}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<section class="screen on" id="menu">
+  <h1>Field Games</h1>
+  <p class="muted">Pass-and-play on one phone. No signal needed.</p>
+  <div class="menu">
+    <button class="tile" data-go="imp-setup"><div class="ic">🕵️</div><div><b>Imposter</b><span>3–12 players. Everyone knows the secret word except one.</span></div></button>
+    <button class="tile" data-go="ch-setup"><div class="ic">🎭</div><div><b>Charades</b><span>2 teams. Act it out before the timer runs out.</span></div></button>
+    <button class="tile" data-go="db-setup"><div class="ic">🔲</div><div><b>Dots &amp; Boxes</b><span>2–4 players. Close a box, take another turn.</span></div></button>
+    <button class="tile" data-go="c4"><div class="ic">🔴</div><div><b>Connect Four</b><span>2 players. Four in a row wins.</span></div></button>
+    <button class="tile" data-go="pig-setup"><div class="ic">🎲</div><div><b>Pig</b><span>2–8 players. Push your luck, but don't roll a 1.</span></div></button>
+  </div>
+</section>
+
+<!-- IMPOSTER -->
+<section class="screen" id="imp-setup">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>Imposter</h2></div>
+  <div class="card"><label>Players</label>
+    <div class="stepper"><button data-step="imp-n" data-d="-1">−</button><output id="imp-n">5</output><button data-step="imp-n" data-d="1">+</button></div></div>
+  <div class="card"><label>Category</label><div class="chips" id="imp-cats"></div></div>
+  <p class="muted">Pass the phone around. Each player taps to see their card, then hides it. One player is the Imposter and doesn't know the word. Take turns saying one clue word, then vote.</p>
+  <button class="btn" id="imp-start">Deal cards</button>
+</section>
+
+<section class="screen" id="imp-deal">
+  <div class="top"><button class="back" data-go="imp-setup">‹</button><h2 id="imp-who">Player 1</h2></div>
+  <div class="reveal" id="imp-box"></div>
+</section>
+
+<section class="screen" id="imp-play">
+  <div class="top"><button class="back" data-go="imp-setup">‹</button><h2>Discuss</h2></div>
+  <div class="banner" id="imp-first"></div>
+  <div class="timer" id="imp-timer">3:00</div>
+  <div class="row"><button class="btn alt" id="imp-pause">Pause</button><button class="btn alt" id="imp-add">+1 min</button></div>
+  <p class="muted center">Go round giving one-word clues. When time's up, everyone points at who they think the Imposter is.</p>
+  <button class="btn" id="imp-reveal">Reveal Imposter</button>
+</section>
+
+<section class="screen" id="imp-end">
+  <div class="reveal">
+    <p class="muted">The Imposter was</p>
+    <div class="big" id="imp-end-who"></div>
+    <p class="muted">The word was</p>
+    <div class="big" style="color:var(--accent)" id="imp-end-word"></div>
+  </div>
+  <button class="btn" id="imp-again">Play again</button>
+  <button class="btn alt" data-go="menu">Menu</button>
+</section>
+
+<!-- CHARADES -->
+<section class="screen" id="ch-setup">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>Charades</h2></div>
+  <div class="card"><label>Seconds per turn</label><div class="chips" id="ch-secs"></div></div>
+  <div class="card"><label>Rounds (each team acts once per round)</label>
+    <div class="stepper"><button data-step="ch-r" data-d="-1">−</button><output id="ch-r">3</output><button data-step="ch-r" data-d="1">+</button></div></div>
+  <p class="muted">One person acts while their team guesses. No talking! Tap ✓ when they get it, Skip to pass.</p>
+  <button class="btn" id="ch-start">Start</button>
+</section>
+
+<section class="screen" id="ch-ready">
+  <div class="top"><button class="back" data-go="ch-setup">‹</button><h2>Charades</h2></div>
+  <div class="scores" id="ch-scores"></div>
+  <div class="reveal"><p class="muted" id="ch-round"></p><div class="big" id="ch-team"></div><p class="muted">Hand the phone to the actor. Don't let the team see it.</p></div>
+  <button class="btn" id="ch-go">I'm ready</button>
+</section>
+
+<section class="screen" id="ch-turn">
+  <div class="timer" id="ch-timer">60</div>
+  <div class="reveal" style="min-height:35vh"><div class="big" id="ch-word"></div></div>
+  <div class="row"><button class="btn alt" id="ch-skip">Skip</button><button class="btn good" id="ch-got">✓ Got it</button></div>
+  <p class="center muted" id="ch-count"></p>
+</section>
+
+<section class="screen" id="ch-end">
+  <div class="reveal"><p class="muted">Final score</p><div class="big" id="ch-final"></div></div>
+  <button class="btn" data-go="ch-setup">Play again</button>
+  <button class="btn alt" data-go="menu">Menu</button>
+</section>
+
+<!-- DOTS & BOXES -->
+<section class="screen" id="db-setup">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>Dots &amp; Boxes</h2></div>
+  <div class="card"><label>Players</label>
+    <div class="stepper"><button data-step="db-n" data-d="-1">−</button><output id="db-n">2</output><button data-step="db-n" data-d="1">+</button></div></div>
+  <div class="card"><label>Board size</label><div class="chips" id="db-size"></div></div>
+  <p class="muted">Take turns drawing a line between two dots. Close a box to claim it and go again. Most boxes wins.</p>
+  <button class="btn" id="db-start">Start</button>
+</section>
+
+<section class="screen" id="db">
+  <div class="top"><button class="back" data-go="db-setup">‹</button><h2>Dots &amp; Boxes</h2></div>
+  <div class="scores" id="db-scores"></div>
+  <div class="card" style="padding:10px"><svg id="db-svg"></svg></div>
+  <div class="banner" id="db-msg"></div>
+  <button class="btn alt" id="db-undo">Undo last line</button>
+</section>
+
+<!-- CONNECT FOUR -->
+<section class="screen" id="c4">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>Connect Four</h2></div>
+  <div class="scores" id="c4-scores"></div>
+  <div class="c4" id="c4-board"></div>
+  <div class="banner" id="c4-msg"></div>
+  <button class="btn alt" id="c4-new">New game</button>
+</section>
+
+<!-- PIG -->
+<section class="screen" id="pig-setup">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>Pig</h2></div>
+  <div class="card"><label>Players</label>
+    <div class="stepper"><button data-step="pig-n" data-d="-1">−</button><output id="pig-n">3</output><button data-step="pig-n" data-d="1">+</button></div></div>
+  <div class="card"><label>Play to</label><div class="chips" id="pig-goal"></div></div>
+  <p class="muted">Roll as many times as you like and add up the dice. Hold to bank your points. Roll a 1 and you lose everything from that turn.</p>
+  <button class="btn" id="pig-start">Start</button>
+</section>
+
+<section class="screen" id="pig">
+  <div class="top"><button class="back" data-go="pig-setup">‹</button><h2>Pig</h2></div>
+  <div class="scores" id="pig-scores"></div>
+  <div class="banner" id="pig-msg"></div>
+  <div class="die" id="pig-die">🎲</div>
+  <div class="center"><span class="muted">This turn: </span><b id="pig-turn" style="font-size:28px">0</b></div>
+  <div class="row"><button class="btn" id="pig-roll">Roll</button><button class="btn good" id="pig-hold">Hold</button></div>
+</section>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const PC=['var(--p0)','var(--p1)','var(--p2)','var(--p3)'];
+const store={get(k,d){try{const v=localStorage.getItem('fg.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('fg.'+k,JSON.stringify(v))}catch(e){}}};
+const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
+
+let onLeave=null;
+function go(id){
+  if(onLeave){onLeave();onLeave=null}
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
+  window.scrollTo(0,0);
+  if(id==='c4')c4New();
+}
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');if(g){go(g.dataset.go);return}
+  const s=e.target.closest('[data-step]');
+  if(s){const o=$(s.dataset.step),lim=LIMITS[s.dataset.step];o.value=o.textContent=Math.max(lim[0],Math.min(lim[1],+o.textContent+ +s.dataset.d));store.set(s.dataset.step,+o.textContent)}
+});
+const LIMITS={'imp-n':[3,12],'ch-r':[1,10],'db-n':[2,4],'pig-n':[2,8]};
+for(const k in LIMITS)$(k).textContent=store.get(k,+$(k).textContent);
+
+function chips(el,opts,key,def){
+  let val=store.get(key,def);
+  if(!opts.some(o=>o[0]===val))val=def;
+  el.innerHTML='';
+  opts.forEach(([v,l])=>{const b=document.createElement('button');b.className='chip'+(v===val?' on':'');b.textContent=l;
+    b.onclick=()=>{val=v;store.set(key,v);el.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));b.classList.add('on')};el.appendChild(b)});
+  return()=>val;
+}
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+
+/* ---------- IMPOSTER ---------- */
+const WORDS={
+ 'Animals':['Elephant','Penguin','Kangaroo','Octopus','Giraffe','Crocodile','Owl','Dolphin','Camel','Snake','Horse','Bee','Shark','Lion','Frog','Spider','Cow','Eagle','Bat','Turtle'],
+ 'Food':['Pizza','Sushi','Pancakes','Burger','Ice cream','Curry','Tacos','Popcorn','Spaghetti','Chocolate','Banana','Sandwich','Soup','Cheese','Donut','Fried rice','Watermelon','Noodles','Steak','Salad'],
+ 'Places':['Beach','Hospital','Airport','Library','Cinema','School','Gym','Zoo','Supermarket','Church','Desert','Jungle','Prison','Castle','Farm','Space station','Submarine','Museum','Campsite','Restaurant'],
+ 'Jobs':['Doctor','Pilot','Chef','Farmer','Teacher','Firefighter','Police officer','Astronaut','Dentist','Plumber','Lawyer','Soldier','Artist','Mechanic','Nurse','Builder','Scientist','Waiter','Fisherman','Judge'],
+ 'Objects':['Umbrella','Ladder','Toothbrush','Guitar','Mirror','Candle','Backpack','Hammer','Clock','Pillow','Scissors','Bicycle','Key','Phone','Camera','Tent','Rope','Compass','Torch','Kettle'],
+ 'Sports':['Football','Tennis','Swimming','Boxing','Golf','Basketball','Skiing','Surfing','Cricket','Badminton','Cycling','Wrestling','Archery','Baseball','Volleyball','Rugby','Skateboarding','Fishing','Climbing','Bowling']
+};
+const impCat=chips($('imp-cats'),[['Mixed','Mixed'],...Object.keys(WORDS).map(k=>[k,k])],'imp-cat','Mixed');
+let imp={};
+$('imp-start').onclick=()=>{
+  const n=+$('imp-n').textContent,c=impCat();
+  const cat=c==='Mixed'?pick(Object.keys(WORDS)):c;
+  imp={n,cat,word:pick(WORDS[cat]),spy:Math.floor(Math.random()*n),i:0,first:Math.floor(Math.random()*n)};
+  impShow();go('imp-deal');
+};
+function impShow(){
+  $('imp-who').textContent='Player '+(imp.i+1)+' of '+imp.n;
+  $('imp-box').innerHTML=`<p class="muted">Pass the phone to</p><div class="big">Player ${imp.i+1}</div><button class="btn" id="imp-see">Tap to see your card</button>`;
+  $('imp-see').onclick=()=>{
+    const spy=imp.i===imp.spy;
+    $('imp-box').innerHTML=spy
+      ?`<p class="muted">Category: ${imp.cat}</p><div class="big" style="color:var(--bad)">You are the Imposter</div><p class="muted">Blend in. Work out the word from the clues.</p><button class="btn alt" id="imp-hide">Hide &amp; pass on</button>`
+      :`<p class="muted">Category: ${imp.cat}</p><p class="muted">The secret word is</p><div class="big" style="color:var(--accent)">${imp.word}</div><button class="btn alt" id="imp-hide">Hide &amp; pass on</button>`;
+    $('imp-hide').onclick=()=>{imp.i++;if(imp.i<imp.n)impShow();else impPlay()};
+  };
+}
+let impT=null,impLeft=180,impPaused=false;
+function impPlay(){
+  $('imp-first').textContent='Player '+(imp.first+1)+' gives the first clue';
+  impLeft=180;impPaused=false;$('imp-pause').textContent='Pause';$('imp-timer').textContent=fmt(impLeft);
+  go('imp-play');
+  clearInterval(impT);
+  impT=setInterval(()=>{if(impPaused)return;if(impLeft>0){impLeft--;$('imp-timer').textContent=fmt(impLeft);if(!impLeft)buzz([300,100,300])}},1000);
+  onLeave=()=>clearInterval(impT);
+}
+$('imp-pause').onclick=()=>{impPaused=!impPaused;$('imp-pause').textContent=impPaused?'Resume':'Pause'};
+$('imp-add').onclick=()=>{impLeft+=60;$('imp-timer').textContent=fmt(impLeft)};
+$('imp-reveal').onclick=()=>{$('imp-end-who').textContent='Player '+(imp.spy+1);$('imp-end-word').textContent=imp.word;go('imp-end')};
+$('imp-again').onclick=()=>$('imp-start').click();
+
+/* ---------- CHARADES ---------- */
+const CH=['Brushing teeth','Riding a horse','Swimming','Flying a kite','Playing guitar','Changing a tyre','Fishing','Climbing a mountain','Baking a cake','Walking a dog','Taking a selfie','Skydiving','Milking a cow','Rowing a boat','Juggling','Surfing','Boxing','Sneezing','Getting a haircut','Building a sandcastle','Monkey','Elephant','Kangaroo','Chicken','Snake','Penguin','Crab','Gorilla','Butterfly','Cat chasing a mouse','Zombie','Robot','Superhero','Pirate','Ninja','Ballerina','Cowboy','Magician','Mime in a box','Ghost','Sleepwalking','Eating spaghetti','Opening a stuck jar','Stepping on Lego','Waiting for the bus','Ironing clothes','Lighting a campfire','Setting up a tent','Mosquito bite','Hiccups','Bowling','Golf','Tennis','Archery','Weightlifting','Ice skating','Skipping rope','Karate','Basketball','Yoga','Titanic','Jaws','Star Wars','Harry Potter','The Lion King','Spider-Man','Frozen','Jurassic Park','Finding Nemo','Toy Story','Doctor','Firefighter','Chef','Pilot','Photographer','Hairdresser','Dentist','Referee','Lifeguard','Builder','Earthquake','Thunderstorm','Volcano','Tornado','Blizzard','Washing a car','Painting a wall','Typing on a laptop','Hammering a nail','Sawing wood','Popcorn popping','Blowing up a balloon','Eating a lemon','Hot sand','Cold shower','Slipping on a banana','Lost keys','First date','Job interview','Roller coaster','Escalator','Hot air balloon','Motorbike','Helicopter','Submarine'];
+const chSecs=chips($('ch-secs'),[[45,'45'],[60,'60'],[90,'90'],[120,'120']],'ch-secs',60);
+let ch={};
+$('ch-start').onclick=()=>{ch={rounds:+$('ch-r').textContent,round:1,team:0,score:[0,0],deck:shuffle(CH),secs:chSecs()};chReady()};
+function chScores(){$('ch-scores').innerHTML=[0,1].map(t=>`<div class="score${t===ch.team?' turn':''}" style="color:${PC[t]}"><small>Team ${t+1}</small><b>${ch.score[t]}</b></div>`).join('')}
+function chReady(){chScores();$('ch-round').textContent='Round '+ch.round+' of '+ch.rounds;$('ch-team').innerHTML=`<span style="color:${PC[ch.team]}">Team ${ch.team+1}</span>`;go('ch-ready')}
+function chNext(){if(!ch.deck.length)ch.deck=shuffle(CH);$('ch-word').textContent=ch.deck.pop()}
+let chT=null,chLeft=0,chGot=0;
+$('ch-go').onclick=()=>{
+  chLeft=ch.secs;chGot=0;$('ch-timer').textContent=chLeft;$('ch-count').textContent='Got: 0';chNext();go('ch-turn');
+  clearInterval(chT);
+  chT=setInterval(()=>{chLeft--;$('ch-timer').textContent=chLeft;if(chLeft<=5&&chLeft>0)buzz(60);if(chLeft<=0){clearInterval(chT);buzz([400,100,400]);chEnd()}},1000);
+  onLeave=()=>clearInterval(chT);
+};
+$('ch-got').onclick=()=>{ch.score[ch.team]++;chGot++;$('ch-count').textContent='Got: '+chGot;buzz(30);chNext()};
+$('ch-skip').onclick=()=>chNext();
+function chEnd(){
+  onLeave=null;
+  if(ch.team===1){ch.team=0;ch.round++}else ch.team=1;
+  if(ch.round>ch.rounds){
+    const [a,b]=ch.score;
+    $('ch-final').innerHTML=`<span style="color:${PC[0]}">${a}</span> – <span style="color:${PC[1]}">${b}</span><div style="font-size:24px;margin-top:10px">${a===b?"It's a tie!":'Team '+(a>b?1:2)+' wins!'}</div>`;
+    go('ch-end');
+  } else chReady();
+}
+
+/* ---------- DOTS & BOXES ---------- */
+const dbSize=chips($('db-size'),[[3,'Small 3×3'],[4,'Medium 4×4'],[5,'Large 5×5'],[6,'Huge 6×6']],'db-size',4);
+let db={};
+$('db-start').onclick=()=>{
+  const N=dbSize(),P=+$('db-n').textContent;
+  db={N,P,turn:0,score:Array(P).fill(0),h:{},v:{},box:{},hist:[]};
+  dbDraw();go('db');
+};
+function dbBoxDone(r,c){return db.h[r+','+c]!=null&&db.h[(r+1)+','+c]!=null&&db.v[r+','+c]!=null&&db.v[r+','+(c+1)]!=null}
+function dbMove(kind,r,c){
+  const key=r+','+c;if(db[kind][key]!=null)return;
+  db[kind][key]=db.turn;
+  const cand=kind==='h'?[[r-1,c],[r,c]]:[[r,c-1],[r,c]];
+  const claimed=[];
+  cand.forEach(([br,bc])=>{if(br>=0&&bc>=0&&br<db.N&&bc<db.N&&db.box[br+','+bc]==null&&dbBoxDone(br,bc)){db.box[br+','+bc]=db.turn;db.score[db.turn]++;claimed.push(br+','+bc)}});
+  db.hist.push({kind,key,turn:db.turn,claimed});
+  if(claimed.length)buzz(40);else db.turn=(db.turn+1)%db.P;
+  dbDraw();
+}
+$('db-undo').onclick=()=>{
+  const m=db.hist.pop();if(!m)return;
+  delete db[m.kind][m.key];m.claimed.forEach(k=>{delete db.box[k];db.score[m.turn]--});db.turn=m.turn;dbDraw();
+};
+function dbDraw(){
+  const {N}=db,S=60,M=20,W=N*S+2*M;
+  let s='';
+  for(const k in db.box){const [r,c]=k.split(',').map(Number);s+=`<rect x="${M+c*S+4}" y="${M+r*S+4}" width="${S-8}" height="${S-8}" rx="6" fill="${PC[db.box[k]]}" opacity=".45"/><text x="${M+c*S+S/2}" y="${M+r*S+S/2+8}" text-anchor="middle" font-size="22" font-weight="800" fill="${PC[db.box[k]]}">${db.box[k]+1}</text>`}
+  for(let r=0;r<=N;r++)for(let c=0;c<N;c++){const o=db.h[r+','+c];const x=M+c*S,y=M+r*S;
+    s+=`<line x1="${x}" y1="${y}" x2="${x+S}" y2="${y}" stroke="${o==null?'#333b47':PC[o]}" stroke-width="${o==null?3:7}" stroke-linecap="round"/>`;
+    if(o==null)s+=`<rect class="hit" data-k="h" data-r="${r}" data-c="${c}" x="${x+8}" y="${y-S/4}" width="${S-16}" height="${S/2}" fill="transparent"/>`}
+  for(let r=0;r<N;r++)for(let c=0;c<=N;c++){const o=db.v[r+','+c];const x=M+c*S,y=M+r*S;
+    s+=`<line x1="${x}" y1="${y}" x2="${x}" y2="${y+S}" stroke="${o==null?'#333b47':PC[o]}" stroke-width="${o==null?3:7}" stroke-linecap="round"/>`;
+    if(o==null)s+=`<rect class="hit" data-k="v" data-r="${r}" data-c="${c}" x="${x-S/4}" y="${y+8}" width="${S/2}" height="${S-16}" fill="transparent"/>`}
+  for(let r=0;r<=N;r++)for(let c=0;c<=N;c++)s+=`<circle cx="${M+c*S}" cy="${M+r*S}" r="6" fill="#eef1f5"/>`;
+  const svg=$('db-svg');svg.setAttribute('viewBox',`0 0 ${W} ${W}`);svg.innerHTML=s;
+  $('db-scores').innerHTML=db.score.map((v,i)=>`<div class="score${i===db.turn?' turn':''}" style="color:${PC[i]}"><small>P${i+1}</small><b>${v}</b></div>`).join('');
+  const total=db.score.reduce((a,b)=>a+b,0);
+  if(total===N*N){const best=Math.max(...db.score),w=db.score.map((v,i)=>v===best?'P'+(i+1):null).filter(Boolean);
+    $('db-msg').innerHTML=w.length>1?`Tie between ${w.join(' & ')}!`:`🏆 ${w[0]} wins!`;}
+  else $('db-msg').innerHTML=`<span style="color:${PC[db.turn]}">Player ${db.turn+1}</span>'s turn`;
+}
+$('db-svg').addEventListener('click',e=>{const t=e.target.closest('.hit');if(t)dbMove(t.dataset.k,+t.dataset.r,+t.dataset.c)});
+
+/* ---------- CONNECT FOUR ---------- */
+let c4={wins:[0,0],starter:0};
+const c4Board=$('c4-board');
+for(let i=0;i<42;i++){const d=document.createElement('div');d.dataset.col=i%7;c4Board.appendChild(d)}
+c4Board.onclick=e=>{const d=e.target.closest('[data-col]');if(d)c4Drop(+d.dataset.col)};
+function c4New(){c4.g=Array.from({length:6},()=>Array(7).fill(-1));c4.turn=c4.starter;c4.over=false;c4.win=[];c4Draw()}
+$('c4-new').onclick=c4New;
+function c4Drop(col){
+  if(c4.over)return;
+  let r=5;while(r>=0&&c4.g[r][col]!==-1)r--;if(r<0)return;
+  c4.g[r][col]=c4.turn;buzz(15);
+  const w=c4Check(r,col);
+  if(w){c4.over=true;c4.win=w;c4.wins[c4.turn]++;c4.starter=1-c4.turn;buzz([100,60,100])}
+  else if(c4.g[0].every(x=>x!==-1)){c4.over=true;c4.starter=1-c4.starter}
+  else c4.turn=1-c4.turn;
+  c4Draw();
+}
+function c4Check(r,c){
+  const p=c4.g[r][c];
+  for(const [dr,dc] of [[0,1],[1,0],[1,1],[1,-1]]){
+    const cells=[[r,c]];
+    for(const s of [1,-1]){let rr=r+dr*s,cc=c+dc*s;while(rr>=0&&rr<6&&cc>=0&&cc<7&&c4.g[rr][cc]===p){cells.push([rr,cc]);rr+=dr*s;cc+=dc*s}}
+    if(cells.length>=4)return cells;
+  }
+  return null;
+}
+function c4Draw(){
+  const cols=['#f5d524','#ef5d5d'];
+  [...c4Board.children].forEach((d,i)=>{const r=Math.floor(i/7),c=i%7,v=c4.g[r][c];
+    d.style.background=v<0?'var(--bg)':cols[v];
+    d.style.boxShadow=c4.win.some(([a,b])=>a===r&&b===c)?'0 0 0 4px #fff inset':'none'});
+  $('c4-scores').innerHTML=[0,1].map(i=>`<div class="score${!c4.over&&i===c4.turn?' turn':''}" style="color:${cols[i]}"><small>${i?'Red':'Yellow'}</small><b>${c4.wins[i]}</b></div>`).join('');
+  const name=['Yellow','Red'];
+  $('c4-msg').innerHTML=c4.over?(c4.win.length?`🏆 <span style="color:${cols[c4.turn]}">${name[c4.turn]}</span> wins! Tap New game.`:'Board full, it\'s a draw.')
+    :`<span style="color:${cols[c4.turn]}">${name[c4.turn]}</span>'s turn. Tap a column.`;
+}
+
+/* ---------- PIG ---------- */
+const pigGoal=chips($('pig-goal'),[[30,'30 (quick)'],[50,'50'],[100,'100 (classic)']],'pig-goal',50);
+const FACES=['','⚀','⚁','⚂','⚃','⚄','⚅'];
+let pig={};
+$('pig-start').onclick=()=>{const n=+$('pig-n').textContent;pig={n,goal:pigGoal(),score:Array(n).fill(0),turn:0,pot:0,over:false};$('pig-die').textContent='🎲';pigMsg();pigDraw();go('pig')};
+function pigMsg(t){$('pig-msg').innerHTML=t||`<span style="color:${PC[pig.turn%4]}">Player ${pig.turn+1}</span>, roll!`}
+function pigDraw(){
+  $('pig-scores').innerHTML=pig.score.map((v,i)=>`<div class="score${i===pig.turn&&!pig.over?' turn':''}" style="color:${PC[i%4]}"><small>P${i+1}</small><b>${v}</b></div>`).join('');
+  $('pig-turn').textContent=pig.pot;
+  $('pig-roll').textContent=pig.over?'New game':'Roll';
+  $('pig-hold').disabled=pig.over||pig.pot===0;$('pig-hold').style.opacity=$('pig-hold').disabled?.4:1;
+}
+let pigBusy=false;
+$('pig-roll').onclick=()=>{
+  if(pig.over){$('pig-start').click();return}
+  if(pigBusy)return;pigBusy=true;
+  let k=0;const spin=setInterval(()=>{$('pig-die').textContent=FACES[1+Math.floor(Math.random()*6)];if(++k>6){clearInterval(spin);pigLand()}},50);
+};
+function pigLand(){
+  pigBusy=false;
+  const d=1+Math.floor(Math.random()*6);$('pig-die').textContent=FACES[d];
+  if(d===1){buzz([200]);pigMsg(`💥 Rolled a 1! Player ${pig.turn+1} loses ${pig.pot}. Pass to Player ${(pig.turn+1)%pig.n+1}.`);pig.pot=0;pig.turn=(pig.turn+1)%pig.n}
+  else{pig.pot+=d;if(pig.score[pig.turn]+pig.pot>=pig.goal){pigHold();return}pigMsg()}
+  pigDraw();
+}
+function pigHold(){
+  pig.score[pig.turn]+=pig.pot;pig.pot=0;
+  if(pig.score[pig.turn]>=pig.goal){pig.over=true;buzz([100,60,100]);pigMsg(`🏆 Player ${pig.turn+1} wins with ${pig.score[pig.turn]}!`)}
+  else{pig.turn=(pig.turn+1)%pig.n;pigMsg(`Banked. Pass to <span style="color:${PC[pig.turn%4]}">Player ${pig.turn+1}</span>.`)}
+  pigDraw();
+}
+$('pig-hold').onclick=()=>{if(!pigBusy&&pig.pot>0)pigHold()};
+
+/* keep screen awake during timed games where supported */
+let wake=null;
+async function keepAwake(){try{if('wakeLock' in navigator&&document.visibilityState==='visible')wake=await navigator.wakeLock.request('screen')}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')keepAwake()});
+keepAwake();
+})();
+</script>
+<script>
+if('serviceWorker' in navigator && location.protocol!=='file:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>
